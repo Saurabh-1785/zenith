@@ -8,6 +8,27 @@ function safeParseArray(value) {
   try { return JSON.parse(value) } catch { return [] }
 }
 
+const inputStyle = {
+  width: '100%',
+  padding: '8px 10px',
+  borderRadius: 'var(--radius-md)',
+  border: '1px solid var(--border-default)',
+  background: 'var(--bg-secondary)',
+  color: 'var(--text-primary)',
+  fontSize: 'var(--text-sm)',
+  fontFamily: 'var(--font-sans)',
+  outline: 'none',
+  transition: 'border-color 120ms ease',
+}
+
+const labelStyle = {
+  display: 'block',
+  fontSize: 'var(--text-xs)',
+  fontWeight: 500,
+  color: 'var(--text-secondary)',
+  marginBottom: 'var(--space-1)',
+}
+
 export default function Resources() {
   const [resources, setResources] = useState([])
   const [form, setForm] = useState({ name: '', skills: '', total_capacity: '' })
@@ -35,83 +56,161 @@ export default function Resources() {
       })
       const data = await res.json()
       if (data.id) {
-        setMessage('Resource created successfully! ✅')
+        setMessage('Resource created')
         setForm({ name: '', skills: '', total_capacity: '' })
         fetchResources()
+        setTimeout(() => setMessage(''), 3000)
       } else {
-        setMessage(`❌ ${data.error || 'Failed to create resource'}`)
+        setMessage(data.error || 'Failed to create resource')
       }
     } catch (err) {
-      setMessage(`❌ Error: ${err.message}`)
+      setMessage(`Error: ${err.message}`)
     }
   }
 
-  const cardStyle = { background: '#1e293b', borderRadius: '12px', padding: '24px', border: '1px solid #334155' }
-  const inputStyle = { width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#e2e8f0', fontSize: '14px', marginBottom: '12px' }
-
   return (
     <div>
-      <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>Resources</h2>
-      <p style={{ color: '#64748b', marginBottom: '32px' }}>Manage your engineers and their skills</p>
+      <div style={{ marginBottom: 'var(--space-10)' }}>
+        <h1 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, letterSpacing: '-0.02em', marginBottom: 'var(--space-1)' }}>
+          Resources
+        </h1>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)' }}>
+          Manage engineers and their capacity
+        </p>
+      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 'var(--space-8)', alignItems: 'start' }}>
 
-        {/* Add Form */}
-        <div style={cardStyle}>
-          <h3 style={{ marginBottom: '20px', color: '#e2e8f0' }}>Add Resource</h3>
+        {/* Form */}
+        <div style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 'var(--space-6)',
+        }}>
+          <h2 style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 'var(--space-5)' }}>
+            Add resource
+          </h2>
 
-          <label style={{ color: '#94a3b8', fontSize: '13px' }}>Name</label>
-          <input style={inputStyle} placeholder="e.g. Alice" value={form.name}
-            onChange={e => setForm({ ...form, name: e.target.value })} />
+          <div style={{ marginBottom: 'var(--space-4)' }}>
+            <label style={labelStyle}>Name</label>
+            <input style={inputStyle} placeholder="e.g. Alice" value={form.name}
+              onChange={e => setForm({ ...form, name: e.target.value })} />
+          </div>
 
-          <label style={{ color: '#94a3b8', fontSize: '13px' }}>Skills (comma separated)</label>
-          <input style={inputStyle} placeholder="e.g. javascript, nodejs" value={form.skills}
-            onChange={e => setForm({ ...form, skills: e.target.value })} />
+          <div style={{ marginBottom: 'var(--space-4)' }}>
+            <label style={labelStyle}>Skills</label>
+            <input style={inputStyle} placeholder="e.g. javascript, nodejs" value={form.skills}
+              onChange={e => setForm({ ...form, skills: e.target.value })} />
+          </div>
 
-          <label style={{ color: '#94a3b8', fontSize: '13px' }}>Total Capacity (hours)</label>
-          <input style={inputStyle} placeholder="e.g. 40" type="number" value={form.total_capacity}
-            onChange={e => setForm({ ...form, total_capacity: e.target.value })} />
+          <div style={{ marginBottom: 'var(--space-5)' }}>
+            <label style={labelStyle}>Capacity (hours)</label>
+            <input style={inputStyle} placeholder="e.g. 40" type="number" value={form.total_capacity}
+              onChange={e => setForm({ ...form, total_capacity: e.target.value })} />
+          </div>
 
           <button onClick={handleSubmit} style={{
-            width: '100%', padding: '12px', borderRadius: '8px',
-            background: '#6366f1', color: 'white', border: 'none',
-            fontWeight: '600', cursor: 'pointer', fontSize: '15px'
+            width: '100%',
+            padding: '8px 14px',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--text-primary)',
+            color: 'var(--text-inverse)',
+            border: 'none',
+            fontWeight: 500,
+            cursor: 'pointer',
+            fontSize: 'var(--text-sm)',
+            fontFamily: 'var(--font-sans)',
           }}>
-            Add Resource
+            Add resource
           </button>
 
-          {message && <p style={{ color: '#10b981', marginTop: '12px', fontSize: '14px' }}>{message}</p>}
+          {message && (
+            <p style={{
+              marginTop: 'var(--space-3)',
+              fontSize: 'var(--text-xs)',
+              color: message.includes('Error') || message.includes('Failed') ? 'var(--status-error)' : 'var(--status-success)',
+              fontWeight: 500,
+            }}>{message}</p>
+          )}
         </div>
 
-        {/* Resources List */}
-        <div style={cardStyle}>
-          <h3 style={{ marginBottom: '20px', color: '#e2e8f0' }}>All Resources ({resources.length})</h3>
+        {/* Table */}
+        <div style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 'var(--radius-lg)',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            padding: 'var(--space-4) var(--space-6)',
+            borderBottom: '1px solid var(--border-default)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <h2 style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
+              All resources
+            </h2>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+              {resources.length} total
+            </span>
+          </div>
+
           {resources.length === 0 ? (
-            <p style={{ color: '#64748b' }}>No resources yet</p>
+            <p style={{ padding: 'var(--space-8) var(--space-6)', color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)', textAlign: 'center' }}>
+              No resources added yet
+            </p>
           ) : (
-            resources.map((r, i) => (
-              <div key={i} style={{
-                padding: '16px', borderRadius: '8px',
-                background: '#0f172a', marginBottom: '12px',
-                border: '1px solid #334155'
+            <div>
+              {/* Table header */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 2fr 120px',
+                gap: 'var(--space-4)',
+                padding: 'var(--space-3) var(--space-6)',
+                borderBottom: '1px solid var(--border-default)',
+                background: 'var(--bg-primary)',
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: '600', color: '#e2e8f0' }}>{r.name}</span>
-                  <span style={{ color: '#10b981', fontSize: '14px' }}>
-                    {r.available_capacity}/{r.total_capacity} hrs left
+                <span style={{ fontSize: 'var(--text-xs)', fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Name</span>
+                <span style={{ fontSize: 'var(--text-xs)', fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Skills</span>
+                <span style={{ fontSize: 'var(--text-xs)', fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Capacity</span>
+              </div>
+              {/* Table rows */}
+              {resources.map((r, i) => (
+                <div key={i} style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 2fr 120px',
+                  gap: 'var(--space-4)',
+                  padding: 'var(--space-3) var(--space-6)',
+                  borderBottom: i < resources.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                  alignItems: 'center',
+                }}>
+                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>{r.name}</span>
+                  <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap' }}>
+                    {safeParseArray(r.skills).map((skill, j) => (
+                      <span key={j} style={{
+                        padding: '1px 7px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border-default)',
+                        background: 'var(--bg-primary)',
+                        color: 'var(--text-secondary)',
+                        fontSize: 'var(--text-xs)',
+                        fontWeight: 450,
+                      }}>{skill}</span>
+                    ))}
+                  </div>
+                  <span style={{
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--text-secondary)',
+                    textAlign: 'right',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {r.available_capacity}/{r.total_capacity} hrs
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {safeParseArray(r.skills).map((skill, j) => (
-                    <span key={j} style={{
-                      padding: '4px 10px', borderRadius: '20px',
-                      background: '#1e1b4b', color: '#6366f1',
-                      fontSize: '12px', fontWeight: '500'
-                    }}>{skill}</span>
-                  ))}
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>

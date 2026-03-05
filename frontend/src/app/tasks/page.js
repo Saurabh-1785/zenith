@@ -8,6 +8,27 @@ function safeParseArray(value) {
   try { return JSON.parse(value) } catch { return [] }
 }
 
+const inputStyle = {
+  width: '100%',
+  padding: '8px 10px',
+  borderRadius: 'var(--radius-md)',
+  border: '1px solid var(--border-default)',
+  background: 'var(--bg-secondary)',
+  color: 'var(--text-primary)',
+  fontSize: 'var(--text-sm)',
+  fontFamily: 'var(--font-sans)',
+  outline: 'none',
+  transition: 'border-color 120ms ease',
+}
+
+const labelStyle = {
+  display: 'block',
+  fontSize: 'var(--text-xs)',
+  fontWeight: 500,
+  color: 'var(--text-secondary)',
+  marginBottom: 'var(--space-1)',
+}
+
 export default function Tasks() {
   const [tasks, setTasks] = useState([])
   const [form, setForm] = useState({ name: '', required_skills: '', estimated_effort: '', minimum_capacity_needed: '', priority: '', deadline: '' })
@@ -38,116 +59,226 @@ export default function Tasks() {
       })
       const data = await res.json()
       if (data.id) {
-        setMessage('Task created successfully! ✅')
+        setMessage('Task created')
         setForm({ name: '', required_skills: '', estimated_effort: '', minimum_capacity_needed: '', priority: '', deadline: '' })
         fetchTasks()
+        setTimeout(() => setMessage(''), 3000)
       } else {
-        setMessage(`❌ ${data.error || 'Failed to create task'}`)
+        setMessage(data.error || 'Failed to create task')
       }
     } catch (err) {
-      setMessage(`❌ Error: ${err.message}`)
+      setMessage(`Error: ${err.message}`)
     }
   }
 
-  const priorityColor = (p) => {
-    if (p >= 5) return '#ef4444'
-    if (p >= 3) return '#f59e0b'
-    return '#10b981'
-  }
-
   const priorityLabel = (p) => {
-    if (p >= 5) return 'CRITICAL'
-    if (p >= 3) return 'HIGH'
-    return 'MEDIUM'
+    if (p >= 5) return 'Critical'
+    if (p >= 3) return 'High'
+    return 'Medium'
   }
 
-  const cardStyle = { background: '#1e293b', borderRadius: '12px', padding: '24px', border: '1px solid #334155' }
-  const inputStyle = { width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#e2e8f0', fontSize: '14px', marginBottom: '12px' }
+  const priorityStyle = (p) => {
+    if (p >= 5) return { color: 'var(--status-error)', background: 'var(--status-error-bg)' }
+    if (p >= 3) return { color: 'var(--status-warning)', background: 'var(--status-warning-bg)' }
+    return { color: 'var(--status-success)', background: 'var(--status-success-bg)' }
+  }
+
+  const statusStyle = (s) => {
+    if (s === 'ALLOCATED') return { color: 'var(--status-success)', background: 'var(--status-success-bg)' }
+    return { color: 'var(--status-warning)', background: 'var(--status-warning-bg)' }
+  }
 
   return (
     <div>
-      <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>Tasks</h2>
-      <p style={{ color: '#64748b', marginBottom: '32px' }}>Manage tasks waiting to be allocated</p>
+      <div style={{ marginBottom: 'var(--space-10)' }}>
+        <h1 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, letterSpacing: '-0.02em', marginBottom: 'var(--space-1)' }}>
+          Tasks
+        </h1>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)' }}>
+          Create and manage tasks for allocation
+        </p>
+      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 'var(--space-8)', alignItems: 'start' }}>
 
-        {/* Add Form */}
-        <div style={cardStyle}>
-          <h3 style={{ marginBottom: '20px', color: '#e2e8f0' }}>Add Task</h3>
+        {/* Form */}
+        <div style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 'var(--space-6)',
+        }}>
+          <h2 style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 'var(--space-5)' }}>
+            Add task
+          </h2>
 
-          <label style={{ color: '#94a3b8', fontSize: '13px' }}>Task Name</label>
-          <input style={inputStyle} placeholder="e.g. Build Login API" value={form.name}
-            onChange={e => setForm({ ...form, name: e.target.value })} />
+          <div style={{ marginBottom: 'var(--space-4)' }}>
+            <label style={labelStyle}>Task name</label>
+            <input style={inputStyle} placeholder="e.g. Build Login API" value={form.name}
+              onChange={e => setForm({ ...form, name: e.target.value })} />
+          </div>
 
-          <label style={{ color: '#94a3b8', fontSize: '13px' }}>Required Skills (comma separated)</label>
-          <input style={inputStyle} placeholder="e.g. javascript, nodejs" value={form.required_skills}
-            onChange={e => setForm({ ...form, required_skills: e.target.value })} />
+          <div style={{ marginBottom: 'var(--space-4)' }}>
+            <label style={labelStyle}>Required skills</label>
+            <input style={inputStyle} placeholder="e.g. javascript, nodejs" value={form.required_skills}
+              onChange={e => setForm({ ...form, required_skills: e.target.value })} />
+          </div>
 
-          <label style={{ color: '#94a3b8', fontSize: '13px' }}>Estimated Effort (hours)</label>
-          <input style={inputStyle} placeholder="e.g. 10" type="number" value={form.estimated_effort}
-            onChange={e => setForm({ ...form, estimated_effort: e.target.value })} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+            <div>
+              <label style={labelStyle}>Effort (hrs)</label>
+              <input style={inputStyle} placeholder="10" type="number" value={form.estimated_effort}
+                onChange={e => setForm({ ...form, estimated_effort: e.target.value })} />
+            </div>
+            <div>
+              <label style={labelStyle}>Min. capacity</label>
+              <input style={inputStyle} placeholder="10" type="number" value={form.minimum_capacity_needed}
+                onChange={e => setForm({ ...form, minimum_capacity_needed: e.target.value })} />
+            </div>
+          </div>
 
-          <label style={{ color: '#94a3b8', fontSize: '13px' }}>Minimum Capacity Needed (hours)</label>
-          <input style={inputStyle} placeholder="e.g. 10" type="number" value={form.minimum_capacity_needed}
-            onChange={e => setForm({ ...form, minimum_capacity_needed: e.target.value })} />
-
-          <label style={{ color: '#94a3b8', fontSize: '13px' }}>Priority (1-5)</label>
-          <input style={inputStyle} placeholder="5 = Critical, 1 = Low" type="number" value={form.priority}
-            onChange={e => setForm({ ...form, priority: e.target.value })} />
-
-          <label style={{ color: '#94a3b8', fontSize: '13px' }}>Deadline</label>
-          <input style={inputStyle} type="date" value={form.deadline}
-            onChange={e => setForm({ ...form, deadline: e.target.value })} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)', marginBottom: 'var(--space-5)' }}>
+            <div>
+              <label style={labelStyle}>Priority (1–5)</label>
+              <input style={inputStyle} placeholder="5" type="number" value={form.priority}
+                onChange={e => setForm({ ...form, priority: e.target.value })} />
+            </div>
+            <div>
+              <label style={labelStyle}>Deadline</label>
+              <input style={inputStyle} type="date" value={form.deadline}
+                onChange={e => setForm({ ...form, deadline: e.target.value })} />
+            </div>
+          </div>
 
           <button onClick={handleSubmit} style={{
-            width: '100%', padding: '12px', borderRadius: '8px',
-            background: '#6366f1', color: 'white', border: 'none',
-            fontWeight: '600', cursor: 'pointer', fontSize: '15px'
+            width: '100%',
+            padding: '8px 14px',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--text-primary)',
+            color: 'var(--text-inverse)',
+            border: 'none',
+            fontWeight: 500,
+            cursor: 'pointer',
+            fontSize: 'var(--text-sm)',
+            fontFamily: 'var(--font-sans)',
           }}>
-            Add Task
+            Add task
           </button>
 
-          {message && <p style={{ color: '#10b981', marginTop: '12px', fontSize: '14px' }}>{message}</p>}
+          {message && (
+            <p style={{
+              marginTop: 'var(--space-3)',
+              fontSize: 'var(--text-xs)',
+              color: message.includes('Error') || message.includes('Failed') ? 'var(--status-error)' : 'var(--status-success)',
+              fontWeight: 500,
+            }}>{message}</p>
+          )}
         </div>
 
-        {/* Tasks List */}
-        <div style={cardStyle}>
-          <h3 style={{ marginBottom: '20px', color: '#e2e8f0' }}>All Tasks ({tasks.length})</h3>
+        {/* Table */}
+        <div style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 'var(--radius-lg)',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            padding: 'var(--space-4) var(--space-6)',
+            borderBottom: '1px solid var(--border-default)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <h2 style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
+              All tasks
+            </h2>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+              {tasks.length} total
+            </span>
+          </div>
+
           {tasks.length === 0 ? (
-            <p style={{ color: '#64748b' }}>No tasks yet</p>
+            <p style={{ padding: 'var(--space-8) var(--space-6)', color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)', textAlign: 'center' }}>
+              No tasks created yet
+            </p>
           ) : (
-            tasks.map((t, i) => (
-              <div key={i} style={{
-                padding: '16px', borderRadius: '8px',
-                background: '#0f172a', marginBottom: '12px',
-                border: '1px solid #334155'
+            <div>
+              {/* Table header */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1.5fr 1.5fr 80px 80px 90px 80px',
+                gap: 'var(--space-3)',
+                padding: 'var(--space-3) var(--space-6)',
+                borderBottom: '1px solid var(--border-default)',
+                background: 'var(--bg-primary)',
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: '600', color: '#e2e8f0' }}>{t.name}</span>
+                {['Name', 'Skills', 'Effort', 'Priority', 'Deadline', 'Status'].map(h => (
+                  <span key={h} style={{
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: 500,
+                    color: 'var(--text-tertiary)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}>{h}</span>
+                ))}
+              </div>
+              {/* Table rows */}
+              {tasks.map((t, i) => (
+                <div key={i} style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1.5fr 1.5fr 80px 80px 90px 80px',
+                  gap: 'var(--space-3)',
+                  padding: 'var(--space-3) var(--space-6)',
+                  borderBottom: i < tasks.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                  alignItems: 'center',
+                }}>
+                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
+                    {t.name}
+                  </span>
+                  <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap' }}>
+                    {safeParseArray(t.required_skills).map((skill, j) => (
+                      <span key={j} style={{
+                        padding: '1px 7px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border-default)',
+                        background: 'var(--bg-primary)',
+                        color: 'var(--text-secondary)',
+                        fontSize: 'var(--text-xs)',
+                        fontWeight: 450,
+                      }}>{skill}</span>
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
+                    {t.estimated_effort} hrs
+                  </span>
                   <span style={{
-                    padding: '4px 10px', borderRadius: '20px', fontSize: '12px',
-                    fontWeight: '600', background: priorityColor(t.priority) + '22',
-                    color: priorityColor(t.priority)
+                    display: 'inline-block',
+                    padding: '1px 7px',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: 500,
+                    width: 'fit-content',
+                    ...priorityStyle(t.priority),
                   }}>
                     {priorityLabel(t.priority)}
                   </span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
+                    {new Date(t.deadline).toLocaleDateString()}
+                  </span>
+                  <span style={{
+                    display: 'inline-block',
+                    padding: '1px 7px',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: 500,
+                    width: 'fit-content',
+                    ...statusStyle(t.status),
+                  }}>
+                    {t.status}
+                  </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>
-                  <span>⏱ {t.estimated_effort} hrs</span>
-                  <span>📅 {new Date(t.deadline).toLocaleDateString()}</span>
-                  <span style={{ color: t.status === 'ALLOCATED' ? '#10b981' : '#f59e0b' }}>● {t.status}</span>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {safeParseArray(t.required_skills).map((skill, j) => (
-                    <span key={j} style={{
-                      padding: '4px 10px', borderRadius: '20px',
-                      background: '#1e1b4b', color: '#6366f1',
-                      fontSize: '12px', fontWeight: '500'
-                    }}>{skill}</span>
-                  ))}
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>

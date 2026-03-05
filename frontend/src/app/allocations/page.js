@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { Play } from 'lucide-react'
 
 const API = 'http://localhost:5000'
 
@@ -26,14 +27,14 @@ export default function Allocations() {
       const data = await res.json()
 
       if (data.error) {
-        setMessage(`❌ ${data.error}`)
+        setMessage(`Error: ${data.error}`)
       } else {
-        setMessage(`✅ ${data.allocations.length} tasks allocated, ${data.unallocated.length} unallocated`)
+        setMessage(`${data.allocations.length} tasks allocated, ${data.unallocated.length} unallocated`)
         setMetrics(data.metrics)
         fetchData()
       }
     } catch (err) {
-      setMessage(`❌ Error: ${err.message}`)
+      setMessage(`Error: ${err.message}`)
     }
     setLoading(false)
   }
@@ -44,94 +45,196 @@ export default function Allocations() {
     available: r.available_capacity
   }))
 
-  const cardStyle = { background: '#1e293b', borderRadius: '12px', padding: '24px', border: '1px solid #334155' }
+  const isError = message.startsWith('Error')
 
   return (
     <div>
-      <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>Allocations</h2>
-      <p style={{ color: '#64748b', marginBottom: '32px' }}>Run the allocation engine and see results</p>
+      <div style={{ marginBottom: 'var(--space-10)' }}>
+        <h1 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, letterSpacing: '-0.02em', marginBottom: 'var(--space-1)' }}>
+          Allocations
+        </h1>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)' }}>
+          Run the engine and inspect allocation results
+        </p>
+      </div>
 
-      {/* Run Button */}
-      <div style={{ ...cardStyle, marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* Action bar */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: 'var(--bg-secondary)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 'var(--radius-lg)',
+        padding: 'var(--space-4) var(--space-6)',
+        marginBottom: 'var(--space-6)',
+      }}>
         <div>
-          <h3 style={{ color: '#e2e8f0', marginBottom: '4px' }}>Run Allocation Engine</h3>
-          <p style={{ color: '#64748b', fontSize: '14px' }}>Assigns all pending tasks to best available resources</p>
+          <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '2px' }}>
+            Allocation engine
+          </p>
+          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+            Assigns pending tasks to the best available resources
+          </p>
         </div>
         <button onClick={runAllocation} disabled={loading} style={{
-          padding: '12px 28px', borderRadius: '8px',
-          background: loading ? '#334155' : '#6366f1',
-          color: 'white', border: 'none',
-          fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer',
-          fontSize: '15px', minWidth: '160px'
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-2)',
+          padding: '8px 16px',
+          borderRadius: 'var(--radius-md)',
+          background: loading ? 'var(--bg-tertiary)' : 'var(--text-primary)',
+          color: loading ? 'var(--text-tertiary)' : 'var(--text-inverse)',
+          border: 'none',
+          fontWeight: 500,
+          cursor: loading ? 'not-allowed' : 'pointer',
+          fontSize: 'var(--text-sm)',
+          fontFamily: 'var(--font-sans)',
+          transition: 'background 120ms ease',
         }}>
-          {loading ? '⏳ Running...' : '⚡ Run Allocator'}
+          <Play size={13} />
+          {loading ? 'Running...' : 'Run allocator'}
         </button>
       </div>
 
+      {/* Status message */}
       {message && (
         <div style={{
-          ...cardStyle, marginBottom: '24px',
-          borderColor: message.includes('✅') ? '#10b981' : '#ef4444',
-          color: message.includes('✅') ? '#10b981' : '#ef4444',
-          fontSize: '15px'
+          padding: 'var(--space-3) var(--space-4)',
+          borderRadius: 'var(--radius-md)',
+          marginBottom: 'var(--space-6)',
+          fontSize: 'var(--text-sm)',
+          fontWeight: 500,
+          background: isError ? 'var(--status-error-bg)' : 'var(--status-success-bg)',
+          color: isError ? 'var(--status-error)' : 'var(--status-success)',
+          border: `1px solid ${isError ? '#fecaca' : '#bbf7d0'}`,
         }}>
           {message}
         </div>
       )}
 
+      {/* Metrics */}
       {metrics && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '1px',
+          background: 'var(--border-default)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 'var(--radius-lg)',
+          overflow: 'hidden',
+          marginBottom: 'var(--space-6)',
+        }}>
           {[
-            { label: 'Total Capacity', value: metrics.total_capacity + ' hrs' },
-            { label: 'Used Capacity', value: metrics.used_capacity + ' hrs' },
+            { label: 'Total capacity', value: metrics.total_capacity + ' hrs' },
+            { label: 'Used capacity', value: metrics.used_capacity + ' hrs' },
             { label: 'Utilization', value: metrics.utilization_percentage },
           ].map(m => (
-            <div key={m.label} style={cardStyle}>
-              <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '8px' }}>{m.label}</p>
-              <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#6366f1' }}>{m.value}</p>
+            <div key={m.label} style={{
+              background: 'var(--bg-secondary)',
+              padding: 'var(--space-5) var(--space-6)',
+            }}>
+              <p style={{
+                fontSize: 'var(--text-xs)',
+                color: 'var(--text-tertiary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                fontWeight: 500,
+                marginBottom: 'var(--space-1)',
+              }}>{m.label}</p>
+              <p style={{
+                fontSize: 'var(--text-xl)',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                letterSpacing: '-0.02em',
+                fontVariantNumeric: 'tabular-nums',
+              }}>{m.value}</p>
             </div>
           ))}
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
 
         {/* Chart */}
-        <div style={cardStyle}>
-          <h3 style={{ marginBottom: '24px', color: '#e2e8f0' }}>Resource Capacity Chart</h3>
+        <div style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 'var(--space-6)',
+        }}>
+          <h2 style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 'var(--space-6)' }}>
+            Resource capacity
+          </h2>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={chartData}>
-              <XAxis dataKey="name" stroke="#64748b" />
-              <YAxis stroke="#64748b" />
-              <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
-              <Bar dataKey="used" name="Used" stackId="a" fill="#6366f1" radius={[0, 0, 4, 4]} />
-              <Bar dataKey="available" name="Available" stackId="a" fill="#334155" radius={[4, 4, 0, 0]} />
+              <XAxis dataKey="name" stroke="#a3a3a3" tick={{ fontSize: 12 }} />
+              <YAxis stroke="#a3a3a3" tick={{ fontSize: 12 }} />
+              <Tooltip
+                contentStyle={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: 'var(--text-sm)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                }}
+              />
+              <Bar dataKey="used" name="Used" stackId="a" fill="#4f46e5" radius={[0, 0, 2, 2]} />
+              <Bar dataKey="available" name="Available" stackId="a" fill="#e5e5e5" radius={[2, 2, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Allocations List */}
-        <div style={cardStyle}>
-          <h3 style={{ marginBottom: '20px', color: '#e2e8f0' }}>All Allocations ({allocations.length})</h3>
+        {/* Allocation list */}
+        <div style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 'var(--radius-lg)',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            padding: 'var(--space-4) var(--space-6)',
+            borderBottom: '1px solid var(--border-default)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <h2 style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
+              All allocations
+            </h2>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+              {allocations.length} total
+            </span>
+          </div>
+
           {allocations.length === 0 ? (
-            <p style={{ color: '#64748b' }}>No allocations yet — run the engine!</p>
+            <p style={{ padding: 'var(--space-8) var(--space-6)', color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)', textAlign: 'center' }}>
+              No allocations yet — run the engine
+            </p>
           ) : (
-            <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+            <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
               {allocations.map((a, i) => (
                 <div key={i} style={{
-                  padding: '12px', borderRadius: '8px',
-                  background: '#0f172a', marginBottom: '8px',
-                  border: '1px solid #334155',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: 'var(--space-3) var(--space-6)',
+                  borderBottom: i < allocations.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                 }}>
                   <div>
-                    <p style={{ color: '#e2e8f0', fontWeight: '600', fontSize: '14px' }}>{a.task_name}</p>
-                    <p style={{ color: '#64748b', fontSize: '12px' }}>Priority {a.priority} · {new Date(a.deadline).toLocaleDateString()}</p>
+                    <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>{a.task_name}</p>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', marginTop: '1px' }}>
+                      Priority {a.priority} · {new Date(a.deadline).toLocaleDateString()}
+                    </p>
                   </div>
                   <span style={{
-                    padding: '6px 12px', borderRadius: '20px',
-                    background: '#1e1b4b', color: '#6366f1',
-                    fontSize: '13px', fontWeight: '600'
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-default)',
+                    color: 'var(--text-secondary)',
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: 500,
                   }}>{a.resource_name}</span>
                 </div>
               ))}
